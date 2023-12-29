@@ -1,6 +1,8 @@
 # streamlit_alphalens
 基于streamlit的因子分析app
 
+## 运行
+
 **使用步骤**
 
 1. 下载测试用数据将csv放入data文件下
@@ -10,7 +12,23 @@
    streamlit run app.py
    ```
 
+## 页面
 
+**主要功能**
+
+![sidebar.png](https://github.com/hugo2046/streamlit_alphalens/blob/main/img/sidebar.png?raw=true)
+
+**因子分析流程**
+
+![step1.png](https://github.com/hugo2046/streamlit_alphalens/blob/main/img/step1.png?raw=true)
+
+![step2.png](https://github.com/hugo2046/streamlit_alphalens/blob/main/img/step2.png?raw=true)
+
+![step4_a.png](https://github.com/hugo2046/streamlit_alphalens/blob/main/img/step4_a.png?raw=true)
+
+![step4_b.png](https://github.com/hugo2046/streamlit_alphalens/blob/main/img/step4_b.png?raw=true)
+
+![step4_c.png](https://github.com/hugo2046/streamlit_alphalens/blob/main/img/step4_c.png?raw=true)
 
 **TO DO**
 
