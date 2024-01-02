@@ -1,1 +1,1 @@
-from .dolinphdb_loader import DolinphdbLoader, CSVLoder, DataLoader
+from .loader import DolinphdbLoader, CSVLoder, DataLoader

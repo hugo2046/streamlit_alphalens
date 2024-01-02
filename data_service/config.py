@@ -9,10 +9,10 @@ Description: 数据加载设置
 from typing import Dict
 
 
-DB_CONN: Dict = dict(host="localhost", port=8848, username="admin", password="123456")
-FACTOR_TABLE_NAME: str = "vol_battle"
+DB_CONN: Dict = dict(host="localhost", port=8848, username="admin", password="123456") # dolphindb本地连接
+FACTOR_TABLE_NAME: str = "DailyFactor" # 因子表名
 PRICE_TABLE_NAME: str = "stock"
-FACTPR_DB_PATH: str = "dfs://factor_data"
+FACTPR_DB_PATH: str = "dfs://FactorDev"  # 测试用-因子数据
 PRICE_DB_PATH: str = "dfs://daily_data"
 
 CSV_PATH: Dict = {"price_path": "data/price.csv", "factor_path": "data/factor.csv"}

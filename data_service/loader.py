@@ -6,13 +6,153 @@ LastEditTime: 2023-12-14 22:56:04
 FilePath: 
 Description: 因子读取
 """
-import pandas as pd
+from abc import ABC, abstractmethod
+from typing import Dict, List, Union
+
 import dolphindb as ddb
+import pandas as pd
 from streamlit_utils.utils import datetime2str
-from typing import Union, List, Dict
+
 from . import config
 
 
+class Loader(ABC):
+    def __init__(self) -> None:
+        pass
+
+    @abstractmethod
+    def get_factor_data(
+        self, factor_name: Union[List, str], start_dt: str, end_dt: str
+    ) -> pd.DataFrame:
+        pass
+
+    @abstractmethod
+    def get_stock_price(
+        self,
+        codes: Union[str, List],
+        start_dt: str,
+        end_dt: str,
+        fields: Union[str, List],
+    ) -> pd.DataFrame:
+        pass
+
+    @abstractmethod
+    def get_factor_name_list(self) -> List[str]:
+        pass
+
+    @abstractmethod
+    def get_factor_begin_and_end_period(self, factor_name: str) -> List[str]:
+        pass
+
+
+class DolinphdbLoader(Loader):
+    def __init__(self, host: str, port: int, username: str, password: str) -> None:
+        # 连接数据库
+        self.session: ddb.session = ddb.session()
+        self.session.connect(host, port, username, password)
+        self.factor_data: pd.DataFrame = None
+        self.stock_price: pd.DataFrame = None
+
+    def get_factor_data(
+        self, factor_name: Union[List, str], start_dt: str, end_dt: str
+    ) -> pd.DataFrame:
+        if not isinstance(factor_name, (str, list)):
+            raise ValueError("factor_name must be str or list")
+
+        sel_factor: str = (
+            f"code=='{factor_name}'"
+            if isinstance(factor_name, str)
+            else f"code in {factor_name}"
+        )
+
+        time_between: List[str] = []
+        if start_dt is not None:
+            start_dt_str: str = datetime2str(start_dt, "%Y.%m.%d")
+            time_between.append(f"trade_date >= {start_dt_str}")
+        if end_dt is not None:
+            end_dt_str: str = datetime2str(end_dt, "%Y.%m.%d")
+            time_between.append(f"trade_date <= {end_dt_str}")
+        time_between_str: str = " and ".join(time_between)
+
+        expr: str = (
+            f"{sel_factor} and ({time_between_str})" if time_between_str else sel_factor
+        )
+
+        query_expr: str = f"""
+        factor_table = loadTable('{config.FACTPR_DB_PATH}', '{config.FACTOR_TABLE_NAME}')
+        select * from factor_table where {expr} and (code like '6%SH' or code like '3%SZ' or code like '0%SZ')
+        """
+
+        self.factor_data = self.session.run(query_expr, clearMemory=True)
+        return self.factor_data
+
+    def get_stock_price(
+        self,
+        codes: Union[str, List],
+        start_dt: str,
+        end_dt: str,
+        fields: Union[str, List],
+    ) -> DataFrame:
+        fields: List[str] = [fields] if isinstance(fields, str) else fields
+
+        default_fields: List[str] = ["code", "trade_date"] + [
+            field for field in fields if field not in ["trade_date", "code"]
+        ]
+        default_fields_str: str = ",".join(default_fields)
+
+        if not isinstance(codes, (str, list)):
+            raise ValueError("codes must be str or list")
+
+        sel_codes: str = (
+            f"code=='{codes}'" if isinstance(codes, str) else f"code in {codes}"
+        )
+
+        time_between: List[str] = []
+        if start_dt is not None:
+            start_dt_str: str = datetime2str(start_dt, "%Y.%m.%d")
+            time_between.append(f"trade_date >= {start_dt_str}")
+        if end_dt is not None:
+            end_dt_str: str = datetime2str(end_dt, "%Y.%m.%d")
+            time_between.append(f"trade_date <= {end_dt_str}")
+        time_between_str: str = " and ".join(time_between)
+
+        expr: str = (
+            f"{sel_codes} and ({time_between_str})" if time_between else sel_codes
+        )
+
+        query_expr: str = f"""
+        price_table = loadTable('{config.PRICE_DB_PATH}', '{config.PRICE_TABLE_NAME}')
+        select {default_fields_str} from price_table where {expr} and (code like '6%SH' or code like '3%SZ' or code like '0%SZ')
+        """
+
+        self.stock_price = self.session.run(query_expr, clearMemory=True)
+        return self.stock_price
+
+    @property
+    def get_factor_name_list(self) -> List[str]:
+        expr = f"""
+        table = loadTable('{config.FACTPR_DB_PATH}', '{config.FACTOR_TABLE_NAME}')
+        schema(table).partitionSchema[1]
+        """
+
+        factor_name: List[str] = self.session.run(expr, clearMemory=True).tolist()
+        return [factor for factor in factor_name if factor not in ["f1", "f2"]]
+
+    def get_factor_begin_and_end_period(self, factor_name: str) -> List[str]:
+        if not isinstance(factor_name, str):
+            raise ValueError("factor_name must be str")
+
+        query_expr: str = f"""
+        factor_table = loadTable('{config.FACTPR_DB_PATH}', '{config.FACTOR_TABLE_NAME}')
+        select min(trade_date),max(trade_date) from factor_table where factor_name == "{factor_name}"
+        """
+        return (
+            self.session.run(query_expr, clearMemory=True)
+            .iloc[0]
+            .dt.strftime("%Y-%m-%d")
+            .tolist()
+        )
+    
 class CSVLoder:
     def __init__(self, price_path: str, factor_path: str) -> None:
         self.price_path = price_path
