@@ -17,10 +17,10 @@ from ..utils import local_json_lottie
 
 def update_web_tag():
     lottie_local_json: Dict = {
-        "step 1": "page/img/step1.json",
-        "step 2": "page/img/moon.json",
-        "step 3": "page/img/rockets.json",
-        "step 4": "page/img/step4.json",
+        "step 1": "page/img/signs.json",
+        "step 2": "page/img/rockets.json",
+        "step 3": "page/img/moon.json",
+        "step 4": "page/img/lego.json",
     }
 
     local_json_lottie(lottie_local_json[st.session_state["step"]], height=200)
@@ -67,6 +67,7 @@ def main(params: Dict):
     update_step_status(step)
 
     if step == "step 1":
+   
         factor_selector(params["factor_names"])
 
     elif step == "step 2":
@@ -94,6 +95,7 @@ def main(params: Dict):
         )
 
     elif step == "step 4":
+       
         factor_report(params["loader"])
 
 

@@ -11,9 +11,10 @@ from typing import List
 
 import streamlit as st
 import streamlit_antd_components as sac
-from data_service import DataLoader
+from data_service import DolinphdbLoader, Loader
 from page.factor_flow import FACTOR_FLOW
-from page.overview import overview
+from page.factor_compare import FACTOR_COMPARE
+from page.overview import overview, account_settings
 from page.utils import local_json_lottie
 
 st.set_page_config(layout="wide", page_title="Alphalens-stream App", page_icon="🧊")
@@ -41,6 +42,13 @@ if "index" not in st.session_state:
 
 if "step" not in st.session_state:
     st.session_state["step"] = "step 1"
+
+if "loader_type" not in st.session_state:
+    st.session_state["loader_type"] = "ddb"
+
+if "price" not in st.session_state:
+    st.session_state["price_type"] = "avg_price"
+
 
 with st.sidebar.container():
     st.subheader("Workflow")
@@ -87,24 +95,30 @@ with st.sidebar.container():
     )
 
 with st.container():
+    loader: Loader = DolinphdbLoader()
+    factor_names: List[str] = loader.get_factor_name_list
+
     if menu == "主页":
         overview()
 
     elif menu == "因子分析":
-        loader: DataLoader = DataLoader("csv")
-        factor_names: List[str] = loader.get_factor_name()
         com_ = FACTOR_FLOW.get("factor")
         com_.get("main")({"factor_names": factor_names, "loader": loader})
 
     elif menu == "因子对比":
-        sac.alert(
-            message="Alert Message",
-            description="暂未完成...",
-            banner=True,
-            icon="🚧",
-            closable=True,
-        )
-        local_json_lottie("page/img/elephants.json", height=500)
+
+        
+        com_ = FACTOR_COMPARE.get("factor")
+        com_.get("main")({"factor_names": factor_names, "loader": loader})
+
+        # sac.alert(
+        #     message="Alert Message",
+        #     description="暂未完成...",
+        #     banner=True,
+        #     icon="🚧",
+        #     closable=True,
+        # )
+        # local_json_lottie("page/img/elephants.json", height=500)
 
     elif menu == "回测分析":
         sac.alert(
@@ -115,6 +129,9 @@ with st.container():
             closable=True,
         )
         local_json_lottie("page/img/deer.json", height=500)
+
+    elif menu == "设置":
+        account_settings()
 
     else:
         sac.alert(
