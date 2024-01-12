@@ -30,6 +30,10 @@
 
 ![step4_c.png](https://github.com/hugo2046/streamlit_alphalens/blob/main/img/step4_c.png?raw=true)
 
+**因子对比**
+
+![board.jpeg](https://github.com/hugo2046/streamlit_alphalens/blob/main/img/board.jpeg?raw=true)
+
 **TO DO**
 
 - [ ] 接入qlib
