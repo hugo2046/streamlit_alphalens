@@ -113,16 +113,43 @@ def load_analyzer(factor_name: str, params: Dict) -> Tuple[str, FactorAnalyzer]:
     return (factor_name, factor_analyzer)
 
 
+
+# @capture_warnings
+# def fetch_factor_data(loader: Loader, mult: bool = False) -> FactorAnalyzer:
+#     params: Dict = prepare_params(loader)
+#     factor_names: List[str] = params["factor_names"]
+
+#     if not mult:
+#         if len(factor_names) > 1:
+#             st.warning("分析模块仅分析单个因子,不能多选!", icon="🚨")
+#             factor_name: str = factor_names[0]
+#             st.stop()
+#         # factor_name: str = factor_names[0]
+
+#     if mult:
+#         with Parallel(n_jobs=2) as parallel:
+#             factor_analyzer = parallel(
+#                 delayed(load_analyzer)(factor_name, params)
+#                 for factor_name in factor_names
+#             )
+
+#         factor_analyzer: Dict = dict(factor_analyzer)
+
+#     else:
+#         factor_analyzer = load_analyzer(factor_name, params)[1]
+
+#     return factor_analyzer
+
 # 数据准备
 @capture_warnings
 def fetch_factor_data(loader: Loader, mult: bool = False) -> FactorAnalyzer:
     params: Dict = prepare_params(loader)
     factor_names: List[str] = params["factor_names"]
-    if not mult:
-        if len(factor_names) > 1:
-            st.warning("分析模块仅分析单个因子,不能多选!", icon="🚨")
+    factor_name: str = factor_names[0]
 
-        factor_name: str = factor_names[0]
+    if not mult and len(factor_names) > 1:
+        st.warning("分析模块仅分析单个因子,不能多选!", icon="🚨")
+        st.stop()
 
     if mult:
         with Parallel(n_jobs=2) as parallel:
@@ -130,14 +157,11 @@ def fetch_factor_data(loader: Loader, mult: bool = False) -> FactorAnalyzer:
                 delayed(load_analyzer)(factor_name, params)
                 for factor_name in factor_names
             )
-
         factor_analyzer: Dict = dict(factor_analyzer)
-
     else:
         factor_analyzer = load_analyzer(factor_name, params)[1]
 
     return factor_analyzer
-
 
 # Step 4: 因子分析
 def factor_report(loader: Loader):
