@@ -46,7 +46,7 @@ def factor_selector(factor_names: List[str]):
                 pd.to_datetime("2022-12-31").date(),
             ],
             min_value=pd.to_datetime("2014-01-01").date(),
-            max_value=pd.to_datetime("2023-12-31").date(),
+            max_value=pd.to_datetime("2024-01-12").date(),
             format="YYYY/MM/DD",
         )
 

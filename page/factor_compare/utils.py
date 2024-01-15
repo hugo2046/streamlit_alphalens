@@ -120,15 +120,15 @@ def get_factor_board(analyze_dict: Dict) -> pd.DataFrame:
     返回:
     - 汇总的 DataFrame。
     """
-    dfs = {}
+    dfs:Dict = {}
     for k, fa in analyze_dict.items():
         # 获取信息比率和平均信息系数
-        ic_frame = fa.plot_information_table(make_pretty=False)
-        ir = ic_frame.loc["IR"].rename("IR")
-        ic_avg = ic_frame.loc["IC Mean"].rename("IC Mean")
+        ic_frame:pd.DataFrame = fa.plot_information_table(make_pretty=False)
+        ir:pd.DataFrame = ic_frame.loc["IR"].rename("IR")
+        ic_avg:pd.DataFrame = ic_frame.loc["IC Mean"].rename("IC Mean")
 
         # 获取各种累计收益率和信息系数
-        metrics = [
+        metrics:List = [
             fa.mean_return_by_quantile.iloc[0].rename("MinimumQuantileAverageReturn").T,
             fa.mean_return_by_quantile.iloc[-1]
             .rename("MaximumQuantileAverageReturn")
@@ -145,13 +145,13 @@ def get_factor_board(analyze_dict: Dict) -> pd.DataFrame:
         ]
 
         # 计算其他指标
-        metric_df = calc_metric(fa, "top_bottom")
+        metric_df:pd.DataFrame = calc_metric(fa, "top_bottom")
 
         # 合并所有指标
-        all_metrics = pd.concat([metric_df, ir, ic_avg] + metrics, axis=1)
+        all_metrics:pd.DataFrame = pd.concat([metric_df, ir, ic_avg] + metrics, axis=1)
         dfs[k] = all_metrics
 
     # 合并所有因子的数据
-    data = pd.concat(dfs, names=["FactorName", "Period"])
+    data:pd.DataFrame = pd.concat(dfs, names=["FactorName", "Period"])
 
     return data
