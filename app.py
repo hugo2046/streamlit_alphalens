@@ -14,6 +14,7 @@ import streamlit_antd_components as sac
 from data_service import DolinphdbLoader, Loader
 from page.factor_flow import FACTOR_FLOW
 from page.factor_compare import FACTOR_COMPARE
+from page.factor_compare import board_table
 from page.overview import overview, account_settings
 from page.utils import local_json_lottie
 
@@ -63,6 +64,9 @@ with st.sidebar.container():
                 children=[
                     sac.MenuItem("因子分析", icon="compass", tag=kernel),
                     sac.MenuItem("因子对比", icon="basket"),
+                    sac.MenuItem(
+                        "因子看板", icon="joystick", tag=sac.Tag("日度更新", color="green")
+                    ),
                 ],
             ),
             sac.MenuItem(
@@ -73,7 +77,7 @@ with st.sidebar.container():
                     sac.MenuItem("回测分析", icon="activity"),
                 ],
             ),
-            sac.MenuItem(type="divider"),
+            sac.MenuItem(type="divider", disabled=True),
             sac.MenuItem(
                 "reference",
                 icon="box-fill",
@@ -83,7 +87,7 @@ with st.sidebar.container():
         ],
         index=2,
         format_func="title",
-        size="middle",
+        size="md",
         open_all=True,
     )
 
@@ -106,27 +110,21 @@ with st.container():
         com_.get("main")({"factor_names": factor_names, "loader": loader})
 
     elif menu == "因子对比":
-
-        
         com_ = FACTOR_COMPARE.get("factor")
         com_.get("main")({"factor_names": factor_names, "loader": loader})
 
-        # sac.alert(
-        #     message="Alert Message",
-        #     description="暂未完成...",
-        #     banner=True,
-        #     icon="🚧",
-        #     closable=True,
-        # )
-        # local_json_lottie("page/img/elephants.json", height=500)
+
+    elif menu == "因子看板":
+        
+        board_table()
 
     elif menu == "回测分析":
         sac.alert(
-            message="Alert Message",
+            label="Alert Message",
             description="暂未完成...",
             banner=True,
             icon="🚧",
-            closable=True,
+            closable=False,
         )
         local_json_lottie("page/img/deer.json", height=500)
 
@@ -135,9 +133,9 @@ with st.container():
 
     else:
         sac.alert(
-            message="Alert Message",
+            label="Alert Message",
             description="暂未完成...",
             banner=True,
             icon="🚧",
-            closable=True,
+            closable=False,
         )
