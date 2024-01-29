@@ -32,13 +32,17 @@
 
 **因子对比**
 
-![board.jpeg](https://github.com/hugo2046/streamlit_alphalens/blob/main/img/board.jpeg?raw=true)
+![compare.jpeg](https://github.com/hugo2046/streamlit_alphalens/blob/dev/img/compare.jpeg?raw=true)
+
+**因子看板**
+
+![board.png](https://github.com/hugo2046/streamlit_alphalens/blob/dev/img/board.png?raw=true)
 
 **TO DO**
 
 - [ ] 接入qlib
 - [ ] 接入backtrader
-- [ ] 在alphalens中添加一些自定义评价图表
+- [x] 在alphalens中添加一些自定义评价图表
 
 ------
 
