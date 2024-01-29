@@ -6,10 +6,11 @@ LastEditTime: 2023-12-18 15:48:11
 FilePath:
 Description: 
 """
-from typing import List, Dict, Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
 import streamlit as st
+import streamlit_antd_components as sac
 
 # from alphalens.streamit_tears import create_full_tear_sheet
 # from streamlit_utils.tear import create_full_tear_sheet
@@ -17,43 +18,11 @@ import streamlit as st
 from analyzer.streamlit_analyze import FactorAnalyzer, create_full_tear_sheet
 from data_service import Loader
 from joblib import Parallel, delayed
-from ..utils import capture_warnings
 
+from ..utils import capture_warnings, exception_catcher
 
 if "alphlens_params" not in st.session_state:
     st.session_state["alphlens_params"] = {}
-
-
-# def plotting_by_streamlit(figs: go.Figure, use_container_width: bool = True):
-#     if not isinstance(figs, (list, tuple)):
-#         figs: List[go.Figure] = [figs]
-#     for fig in figs:
-#         st.plotly_chart(fig, use_container_width=use_container_width)
-
-
-# def plottling_in_gride(
-#     figs: go.Figure, use_container_width: bool = True, cols: int = 3
-# ):
-#     if not isinstance(figs, (list, tuple)):
-#         figs: List[go.Figure] = [figs]
-
-#     if len(figs) > 1:
-#         rows: int = (
-#             len(figs) // cols + 1 if len(figs) % cols != 0 else len(figs) // cols
-#         )
-#         figs_iter = iter(figs)
-#         for _ in range(rows):
-#             streamlit_cols = st.columns(cols)
-
-#             for col in streamlit_cols:
-#                 try:
-#                     fig = next(figs_iter)
-#                 except StopIteration:
-#                     break
-#                 col.plotly_chart(fig, use_container_width=use_container_width)
-
-#     else:
-#         plotting_by_streamlit(figs, use_container_width=use_container_width)
 
 
 def get_input_factor_Name():
@@ -97,12 +66,19 @@ def prepare_params(loader) -> Dict:
 
 
 def load_analyzer(factor_name: str, params: Dict) -> Tuple[str, FactorAnalyzer]:
-    factor_analyzer = FactorAnalyzer(
+    factor_ser: pd.Series = (
         params["factor"]
         .set_index(["trade_date", "code"])
         .query("factor_name==@factor_name")["value"]
         .sort_index()
-        .dropna(),
+        .dropna()
+    )
+
+    if params["prices"].empty or factor_ser.empty:
+        raise ValueError(f"{factor_name} 数据为空!")
+
+    factor_analyzer = FactorAnalyzer(
+        factor_ser,
         prices=params["prices"].shift(-1),
         quantiles=params["quantiles"],
         periods=params["periods"],
@@ -113,35 +89,8 @@ def load_analyzer(factor_name: str, params: Dict) -> Tuple[str, FactorAnalyzer]:
     return (factor_name, factor_analyzer)
 
 
-
-# @capture_warnings
-# def fetch_factor_data(loader: Loader, mult: bool = False) -> FactorAnalyzer:
-#     params: Dict = prepare_params(loader)
-#     factor_names: List[str] = params["factor_names"]
-
-#     if not mult:
-#         if len(factor_names) > 1:
-#             st.warning("分析模块仅分析单个因子,不能多选!", icon="🚨")
-#             factor_name: str = factor_names[0]
-#             st.stop()
-#         # factor_name: str = factor_names[0]
-
-#     if mult:
-#         with Parallel(n_jobs=2) as parallel:
-#             factor_analyzer = parallel(
-#                 delayed(load_analyzer)(factor_name, params)
-#                 for factor_name in factor_names
-#             )
-
-#         factor_analyzer: Dict = dict(factor_analyzer)
-
-#     else:
-#         factor_analyzer = load_analyzer(factor_name, params)[1]
-
-#     return factor_analyzer
-
 # 数据准备
-@capture_warnings
+# @capture_warnings
 def fetch_factor_data(loader: Loader, mult: bool = False) -> FactorAnalyzer:
     params: Dict = prepare_params(loader)
     factor_names: List[str] = params["factor_names"]
@@ -163,7 +112,9 @@ def fetch_factor_data(loader: Loader, mult: bool = False) -> FactorAnalyzer:
 
     return factor_analyzer
 
+
 # Step 4: 因子分析
+@exception_catcher
 def factor_report(loader: Loader):
     if (
         st.session_state.get("alphlens_params", None) is None
@@ -175,7 +126,9 @@ def factor_report(loader: Loader):
     status_placeholder = st.empty()
 
     with status_placeholder.status("因子分析中...", expanded=False) as status:
+
         factor_analyze: FactorAnalyzer = fetch_factor_data(loader)
+
         status.update(label="分析完毕!", state="complete", expanded=True)
 
     status_placeholder.empty()
@@ -185,5 +138,6 @@ def factor_report(loader: Loader):
     if isinstance(factor_name, list) & len(factor_name) > 0:
         factor_name: str = factor_name[0]
     # create_full_tear_sheet(factor)
+
     st.header("📰因子分析报告", divider=True)
     create_full_tear_sheet(factor_analyze, factor_name)

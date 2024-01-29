@@ -12,6 +12,7 @@ import json
 import warnings
 from typing import Dict, List, Tuple
 
+import streamlit as st
 import streamlit_antd_components as sac
 from streamlit_lottie import st_lottie
 
@@ -51,6 +52,24 @@ def capture_warnings(func):
 
         return result
 
+    return wrapper
+
+def exception_catcher(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+           
+            sac.alert(
+                    label="Alphalens Alert Message",
+                    description=str(f"Caught an exception in {func.__name__}: {str(e)}"),
+                    banner=True,
+                    icon="🙊",
+                    closable=False,
+                )
+            st.stop()
+            
     return wrapper
 
 

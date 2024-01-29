@@ -113,7 +113,6 @@ def mult_factor_report(loader: Loader) -> FactorAnalyzer:
 
     with status_placeholder.status("因子分析中...", expanded=False) as status:
         analyze_dict: Dict = fetch_factor_data(loader, True)
-        
         status.update(label="分析完毕!", state="complete", expanded=True)
         
 

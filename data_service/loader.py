@@ -109,8 +109,8 @@ class DolinphdbLoader(Loader):
         if not isinstance(codes, (str, list)):
             raise ValueError("codes must be str or list")
 
-        sel_codes: str = (
-            f"code=='{codes}'" if isinstance(codes, str) else f"code in {codes}"
+        sel_codes: str = {str: f"code=='{codes}'", list: f"code in {codes}"}.get(
+            type(codes), ""
         )
 
         time_between: List[str] = []
@@ -130,7 +130,7 @@ class DolinphdbLoader(Loader):
         price_table = loadTable('{config.PRICE_DB_PATH}', '{config.PRICE_TABLE_NAME}')
         select {default_fields_str} from price_table where {expr} and (code like '6%SH' or code like '3%SZ' or code like '0%SZ')
         """
-
+       
         self.stock_price = self.session.run(query_expr, clearMemory=True)
         return self.stock_price
 
