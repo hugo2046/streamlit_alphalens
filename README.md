@@ -16,7 +16,7 @@
 
 **主要功能**
 
-![sidebar.png](https://github.com/hugo2046/streamlit_alphalens/blob/main/img/sidebar.png?raw=true)
+![sidebar.png](https://github.com/hugo2046/streamlit_alphalens/blob/dev/img/sidebar.png?raw=true)
 
 **因子分析流程**
 
