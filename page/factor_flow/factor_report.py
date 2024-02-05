@@ -6,6 +6,7 @@ LastEditTime: 2023-12-18 15:48:11
 FilePath:
 Description: 
 """
+
 from typing import Dict, List, Tuple
 
 import pandas as pd
@@ -25,7 +26,7 @@ if "alphlens_params" not in st.session_state:
     st.session_state["alphlens_params"] = {}
 
 
-def get_input_factor_Name():
+def get_input_factor_name():
     if "alphlens_params" not in st.session_state:
         raise ValueError("st.session_state中不存在alphlens_params关键字")
 
@@ -39,7 +40,7 @@ def prepare_params(loader) -> Dict:
     params = st.session_state["alphlens_params"]
 
     start_dt, end_dt = params["date_range"]
-    factor_names: List[str] = get_input_factor_Name()
+    factor_names: List[str] = get_input_factor_name()
     factor_data: pd.DataFrame = loader.get_factor_data(
         factor_names, start_dt=start_dt, end_dt=end_dt
     )
@@ -48,6 +49,7 @@ def prepare_params(loader) -> Dict:
     price: pd.DataFrame = loader.get_stock_price(
         codes, start_dt=start_dt, end_dt=end_dt, fields=st.session_state["price_type"]
     )
+   
     pricing: pd.DataFrame = pd.pivot_table(
         price, index="trade_date", columns="code", values=st.session_state["price_type"]
     )
@@ -65,6 +67,9 @@ def prepare_params(loader) -> Dict:
     )
 
 
+IS_REVERSE: Dict = {"moderate_risk": -1}
+
+
 def load_analyzer(factor_name: str, params: Dict) -> Tuple[str, FactorAnalyzer]:
     factor_ser: pd.Series = (
         params["factor"]
@@ -72,7 +77,7 @@ def load_analyzer(factor_name: str, params: Dict) -> Tuple[str, FactorAnalyzer]:
         .query("factor_name==@factor_name")["value"]
         .sort_index()
         .dropna()
-    )
+    ) * IS_REVERSE.get(factor_name, 1)
 
     if params["prices"].empty or factor_ser.empty:
         raise ValueError(f"{factor_name} 数据为空!")

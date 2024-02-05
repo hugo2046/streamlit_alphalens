@@ -6,8 +6,10 @@ LastEditTime: 2023-12-14 22:56:04
 FilePath: 
 Description: 因子读取
 """
+
 from abc import ABC, abstractmethod
-from typing import Dict, List, Union
+from pathlib import Path
+from typing import List, Tuple, Union
 
 import dolphindb as ddb
 import pandas as pd
@@ -16,7 +18,13 @@ from streamlit_utils.utils import datetime2str
 from . import config
 
 
-class Loader(ABC):
+def check_path_exist(path: str) -> bool:
+    if isinstance(path, str):
+        path: Path = Path(path)
+    return path.exists()
+
+
+class LoaderBase(ABC):
     def __init__(self) -> None:
         pass
 
@@ -45,7 +53,7 @@ class Loader(ABC):
         pass
 
 
-class DolinphdbLoader(Loader):
+class DolinphdbLoader(LoaderBase):
     def __init__(
         self,
         host: str = config.DB_CONN["host"],
@@ -60,7 +68,7 @@ class DolinphdbLoader(Loader):
         self.stock_price: pd.DataFrame = None
 
     def get_factor_data(
-        self, factor_name: Union[List, str], start_dt: str, end_dt: str
+        self, factor_name: Union[List, str], start_dt: str = None, end_dt: str = None
     ) -> pd.DataFrame:
         if not isinstance(factor_name, (str, list)):
             raise ValueError("factor_name must be str or list")
@@ -130,11 +138,10 @@ class DolinphdbLoader(Loader):
         price_table = loadTable('{config.PRICE_DB_PATH}', '{config.PRICE_TABLE_NAME}')
         select {default_fields_str} from price_table where {expr} and (code like '6%SH' or code like '3%SZ' or code like '0%SZ')
         """
-       
+
         self.stock_price = self.session.run(query_expr, clearMemory=True)
         return self.stock_price
 
-    @property
     def get_factor_name_list(self) -> List[str]:
         expr = f"""
         table = loadTable('{config.FACTPR_DB_PATH}', '{config.FACTOR_TABLE_NAME}')
@@ -160,32 +167,43 @@ class DolinphdbLoader(Loader):
         )
 
 
-class CSVLoder:
-    def __init__(self, price_path: str, factor_path: str) -> None:
+class ParquetLoder(LoaderBase):
+    def __init__(
+        self,
+        price_path: str = config.PARQUET_PATH["price_path"],
+        factor_path: str = config.PARQUET_PATH["factor_path"],
+    ) -> None:
+
+        if not check_path_exist(price_path) or not check_path_exist(factor_path):
+            raise ValueError("price_path or factor_path not exist")
+
         self.price_path = price_path
         self.factor_path = factor_path
 
     def get_factor_data(
-        self,
-        codes: Union[List, str] = None,
-        start_dt: str = None,
-        end_dt: str = None,
-        fields: Union[str, List] = None,
+        self, factor_name: Union[List, str], start_dt: str = None, end_dt: str = None
     ) -> pd.DataFrame:
-        if isinstance(fields, str):
-            fields: List[str] = [fields]
-        fields: List[str] = list({"trade_date", "code"}.union(fields))
-        df: pd.DataFrame = pd.read_csv(self.factor_path, parse_dates=True)
-        df.sort_values("trade_date", inplace=True)
 
-        df: pd.DataFrame = df.query(
-            "trade_date >= @start_dt and trade_date <= @end_dt"
-        )[fields]
-        df["trade_date"] = pd.to_datetime(df["trade_date"])
-        if codes:
-            df: pd.DataFrame = df[df["code"].isin(codes)]
+        if not isinstance(factor_name, (str, list)):
+            raise ValueError("factor_name must be str or list")
 
-        return df
+        sel: List[Tuple] = []
+        if isinstance(factor_name, str):
+            sel.append(("factor_name", "=", factor_name))
+
+        elif isinstance(factor_name, list):
+            sel.append(("factor_name", "in", factor_name))
+
+        else:
+            raise ValueError("factor_name must be str or list")
+
+        if start_dt is not None:
+            sel.append(("trade_date", ">=", pd.to_datetime(start_dt)))
+        if end_dt is not None:
+
+            sel.append(("trade_date", "<=", pd.to_datetime(end_dt)))
+
+        return pd.read_parquet(self.factor_path, filters=sel)
 
     def get_stock_price(
         self,
@@ -194,145 +212,73 @@ class CSVLoder:
         end_dt: str,
         fields: Union[str, List],
     ) -> pd.DataFrame:
-        df: pd.DataFrame = pd.read_csv(self.price_path, parse_dates=True)
-        df.sort_values("trade_date", inplace=True)
-        fields: List[str] = list({"trade_date", "code"}.union(fields))
-        df: pd.DataFrame = df.query(
-            "trade_date >= @start_dt and trade_date <= @end_dt"
-        )[fields]
-        df["trade_date"] = pd.to_datetime(df["trade_date"])
-        if codes:
-            df: pd.DataFrame = df[df["code"].isin(codes)]
 
-        return df
+        fields: List[str] = [fields] if isinstance(fields, str) else fields
 
-    def get_factor_name(self) -> List[str]:
-        # 获取csv文件的列名
-        df: pd.DataFrame = pd.read_csv(
-            self.factor_path, index_col=None, parse_dates=True, nrows=1
+        default_fields: List[str] = ["code", "trade_date"] + [
+            field for field in fields if field not in ["trade_date", "code"]
+        ]
+
+        sel: List[Tuple] = []
+        if isinstance(codes, str):
+            sel.append(("code", "=", codes))
+
+        elif isinstance(codes, list):
+            sel.append(("code", "in", codes))
+
+        else:
+            raise ValueError("code must be str or list")
+
+        if start_dt is not None:
+            sel.append(("trade_date", ">=", pd.to_datetime(start_dt)))
+        if end_dt is not None:
+
+            sel.append(("trade_date", "<=", pd.to_datetime(end_dt)))
+
+        return pd.read_parquet(self.price_path, filters=sel, columns=default_fields)
+
+    def get_factor_name_list(self) -> List[str]:
+
+        return (
+            pd.read_parquet(self.factor_path, columns=["factor_name"])["factor_name"]
+            .unique()
+            .tolist()
         )
-        return [col for col in df.columns if col not in ["code", "trade_date"]]
+
+    def get_factor_begin_and_end_period(self, factor_name: str) -> List:
+
+        df: pd.DataFrame = pd.read_parquet(
+            self.factor_path,
+            columns=["trade_date", "factor_name"],
+            fileds=[("factor_name", "=", factor_name)],
+        )
+        return [df["trade_date"].min(), df["trade_date"].max()]
 
 
-# class DolinphdbLoader:
-#     def __init__(self, host: str, port: int, username: str, password: str) -> None:
-#         self.host: str = host
-#         self.port: int = int(port)
-#         self.username: str = username
-#         self.password: str = password
+class Loader:
 
-#         # 连接数据库
-#         self.session: ddb.session = ddb.session()
-#         self.session.connect(self.host, self.port, self.username, self.password)
+    def __init__(self, is_ddb: bool) -> None:
+        if is_ddb:
+            self.loader = DolinphdbLoader()
+        else:
+            self.loader = ParquetLoder()
 
-#     def __del__(self) -> None:
-#         if not self.session.isClosed:
-#             self.session.close()
+    def get_factor_data(
+        self, factor_name: Union[List, str], start_dt: str = None, end_dt: str = None
+    ) -> pd.DataFrame:
+        return self.loader.get_factor_data(factor_name, start_dt, end_dt)
 
-#     def get_factor_data(
-#         self,
-#         codes: Union[List, str] = None,
-#         start_dt: str = None,
-#         end_dt: str = None,
-#         fields: Union[str, List] = None,
-#     ) -> pd.DataFrame:
-#         befault_col: set = {"code", "trade_date"}
-#         fields: set = set(fields) if fields else set()
-#         fields: List[str] = list(befault_col.union(fields))
+    def get_stock_price(
+        self,
+        codes: Union[str, List],
+        start_dt: str,
+        end_dt: str,
+        fields: Union[str, List],
+    ) -> pd.DataFrame:
+        return self.loader.get_stock_price(codes, start_dt, end_dt, fields)
 
-#         if start_dt is None or end_dt is None:
-#             raise ValueError("start_dt 和 end_dt 不能为空")
+    def get_factor_name_list(self) -> List[str]:
+        return self.loader.get_factor_name_list()
 
-#         start_dt: str = datetime2str(start_dt, "%Y.%m.%d")
-#         end_dt: str = datetime2str(end_dt, "%Y.%m.%d")
-
-#         sel_time_expr: str = f"trade_date >= {start_dt} and trade_date <= {end_dt}"
-
-#         code_expr_map: Dict = {str: f"code == '{codes}'", list: f"code in {codes}"}
-#         sel_code_expr: str = code_expr_map.get(type(codes), "")
-#         expr: str = (
-#             sel_time_expr
-#             + (f" and {sel_code_expr}" if sel_code_expr else "")
-#             + " and (code like '%SZ' or code like '%SH')"
-#         )
-
-#         table = self.session.loadTable(
-#             tableName=config.FACTOR_TABLE_NAME, dbPath=config.FACTPR_DB_PATH
-#         )
-#         df: pd.DataFrame = table.select(fields).where(expr).toDF()
-#         self.session.undef(table.tableName, "VAR")
-#         return df.sort_values("trade_date")
-
-#     def get_factor_name(self) -> List[str]:
-#         table = self.session.loadTable(
-#             tableName=config.FACTOR_TABLE_NAME, dbPath=config.FACTPR_DB_PATH
-#         )
-#         return [
-#             col for col in table.schema["name"] if col not in ["code", "trade_date"]
-#         ]
-
-#     def get_stock_price(
-#         self,
-#         codes: Union[str, List],
-#         start_dt: str,
-#         end_dt: str,
-#         fields: Union[str, List],
-#     ) -> pd.DataFrame:
-#         befault_col: set = {"code", "trade_date"}
-#         fields: set = set(fields) if fields else set()
-#         fields: List[str] = list(befault_col.union(fields))
-
-#         if start_dt is None or end_dt is None:
-#             raise ValueError("start_dt 和 end_dt 不能为空")
-
-#         start_dt: str = datetime2str(start_dt, "%Y.%m.%d")
-#         end_dt: str = datetime2str(end_dt, "%Y.%m.%d")
-
-#         sel_time_expr: str = f"trade_date >= {start_dt} and trade_date <= {end_dt}"
-
-#         code_expr_map: Dict = {str: f"code == '{codes}'", list: f"code in {codes}"}
-#         sel_code_expr: str = code_expr_map.get(type(codes), "")
-#         expr: str = (
-#             sel_time_expr
-#             + (f" and {sel_code_expr}" if sel_code_expr else "")
-#             + " and (code like '%SZ' or code like '%SH')"
-#         )
-
-#         table = self.session.loadTable(
-#             tableName=config.PRICE_TABLE_NAME, dbPath=config.PRICE_DB_PATH
-#         )
-#         df: pd.DataFrame = table.select(fields).where(expr).toDF()
-#         self.session.undef(table.tableName, "VAR")
-#         return df.sort_values("trade_date")
-
-
-# class DataLoader:
-#     def __init__(self, method: str) -> None:
-#         params: Dict = {"csv": config.CSV_PATH, "db": config.DB_CONN}[method.lower()]
-#         self.loader: Union[DolinphdbLoader, CSVLoder] = {
-#             "csv": CSVLoder,
-#             "dolphindb": DolinphdbLoader,
-#         }[method](**params)
-
-#     def get_factor_data(
-#         self,
-#         start_dt: str,
-#         end_dt: str,
-#         factor_name: List[str],
-#     ) -> pd.DataFrame:
-#         return self.loader.get_factor_data(
-#             start_dt=start_dt, end_dt=end_dt, fields=factor_name
-#         )
-
-#     def get_stock_price(
-#         self, codes: Union[str, List], start_dt: str, end_dt: str
-#     ) -> pd.DataFrame:
-#         return self.loader.get_stock_price(
-#             codes=codes,
-#             start_dt=start_dt,
-#             end_dt=end_dt,
-#             fields=["code", "trade_date", "vwap"],
-#         )
-
-#     def get_factor_name(self) -> List[str]:
-#         return self.loader.get_factor_name()
+    def get_factor_begin_and_end_period(self, factor_name: str) -> List[str]:
+        return self.loader.get_factor_begin_and_end_period(factor_name)

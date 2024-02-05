@@ -67,7 +67,6 @@ def main(params: Dict):
     update_step_status(step)
 
     if step == "step 1":
-   
         factor_selector(params["factor_names"])
 
     elif step == "step 2":
@@ -76,26 +75,25 @@ def main(params: Dict):
 
         else:
             sac.alert(
-                message="Alert Message",
+                label="Alert Message",
                 description="请先完成[Step 1 因子选择]!",
                 banner=True,
                 icon=True,
-                closable=True,
-                type="warning",
+                closable=False,
+                color="red",
             )
 
     elif step == "step 3":
         sac.alert(
-            message="Alert Message",
+            label="Alert Message",
             description="暂未完成...",
             banner=True,
             icon=True,
-            closable=True,
-            type="warning",
+            closable=False,
+            color="red",
         )
 
     elif step == "step 4":
-        
         factor_report(params["loader"])
 
 

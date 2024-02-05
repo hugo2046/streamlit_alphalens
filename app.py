@@ -11,7 +11,7 @@ from typing import List
 
 import streamlit as st
 import streamlit_antd_components as sac
-from data_service import DolinphdbLoader
+from data_service import Loader
 from page.factor_flow import FACTOR_FLOW
 from page.factor_compare import FACTOR_COMPARE
 from page.factor_compare import board_table
@@ -48,7 +48,7 @@ if "loader_type" not in st.session_state:
     st.session_state["loader_type"] = "ddb"
 
 if "price" not in st.session_state:
-    st.session_state["price_type"] = "avg_price"
+    st.session_state["price_type"] = "vwap"
 
 if "db_or_csv" not in st.session_state:
     st.session_state["db_or_csv"] = True
@@ -67,7 +67,9 @@ with st.sidebar.container():
                     sac.MenuItem("因子分析", icon="compass", tag=kernel),
                     sac.MenuItem("因子对比", icon="basket"),
                     sac.MenuItem(
-                        "因子看板", icon="joystick", tag=sac.Tag("日度更新", color="green")
+                        "因子看板",
+                        icon="joystick",
+                        tag=sac.Tag("日度更新", color="green"),
                     ),
                 ],
             ),
@@ -101,8 +103,8 @@ with st.sidebar.container():
     )
 
 with st.container():
-    loader = DolinphdbLoader()
-    factor_names: List[str] = loader.get_factor_name_list
+    loader = Loader(st.session_state["db_or_csv"])
+    factor_names: List[str] = loader.get_factor_name_list()
 
     if menu == "主页":
         overview()
@@ -115,9 +117,8 @@ with st.container():
         com_ = FACTOR_COMPARE.get("factor")
         com_.get("main")({"factor_names": factor_names, "loader": loader})
 
-
     elif menu == "因子看板":
-        
+
         board_table()
 
     elif menu == "回测分析":

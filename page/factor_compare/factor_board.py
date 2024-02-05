@@ -319,7 +319,7 @@ def board_table():
         color="pink",
         icon="emoji-smile",
     )
-    test_df: pd.DataFrame = pd.read_pickle("data/board_table.pkl").reset_index()
+    test_df: pd.DataFrame = pd.read_pickle("data/factor_board.pkl").reset_index()
     period = st.selectbox("选择周期", ("period_1", "period_5", "period_10"), index=0)
     slice_df = test_df.query("Period == @period")
     show_factor_board_table(slice_df)

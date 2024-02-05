@@ -17,4 +17,4 @@ PRICE_TABLE_NAME: str = "EodPrices"
 FACTPR_DB_PATH: str = "dfs://FactorDev"  # 测试用-因子数据
 PRICE_DB_PATH: str = "dfs://TushareData"
 
-CSV_PATH: Dict = {"price_path": "data/price.csv", "factor_path": "data/factor.csv"}
+PARQUET_PATH: Dict = {"price_path": "data/price.parquet", "factor_path": "data/factor.parquet"}
