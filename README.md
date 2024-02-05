@@ -5,12 +5,18 @@
 
 **使用步骤**
 
-1. 下载测试用数据将csv放入data文件下
+1. 下载测试用数据将parquet放入data文件下(在项目文件夹下新建即可,**数据下载见文后**)
 
-2. ```bash
+   ![useparquetdata.png](https://github.com/hugo2046/streamlit_alphalens/blob/dev/img/useparquetdata.png?raw=true)
+
+2. 默认使用的dolphindb数据库,可以在设置项中更改为使用本地数据,即data文件中的数据
+
+3. ```bash
    # 切换到streamlit_alphalens目录下
    streamlit run app.py
    ```
+
+   
 
 ## 页面
 
