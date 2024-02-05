@@ -11,7 +11,7 @@ from typing import List
 
 import streamlit as st
 import streamlit_antd_components as sac
-from data_service import DolinphdbLoader, Loader
+from data_service import DolinphdbLoader
 from page.factor_flow import FACTOR_FLOW
 from page.factor_compare import FACTOR_COMPARE
 from page.factor_compare import board_table
@@ -50,6 +50,8 @@ if "loader_type" not in st.session_state:
 if "price" not in st.session_state:
     st.session_state["price_type"] = "avg_price"
 
+if "db_or_csv" not in st.session_state:
+    st.session_state["db_or_csv"] = True
 
 with st.sidebar.container():
     st.subheader("Workflow")
@@ -99,7 +101,7 @@ with st.sidebar.container():
     )
 
 with st.container():
-    loader: Loader = DolinphdbLoader()
+    loader = DolinphdbLoader()
     factor_names: List[str] = loader.get_factor_name_list
 
     if menu == "主页":

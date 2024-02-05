@@ -64,8 +64,9 @@ def account_settings():
 
         st.subheader("数据加载设置")
 
-        loader_type: bool = st.toggle("使用DolphinDB数据库", value=True)
-
+        loader_type: bool = st.toggle("使用DolphinDB数据库", value=st.session_state["db_or_csv"])
+        st.session_state["db_or_csv"] = loader_type
+        
         if not loader_type:
             path_str = st.text_input("请输入数据文件夹路径", value="./data")
             if not check_csv_file(path_str):
