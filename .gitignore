@@ -1,3 +1,4 @@
 *.csv
 *.pkl
 data/
+__pycache__/
