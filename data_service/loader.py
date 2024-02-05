@@ -14,7 +14,7 @@ from typing import List, Tuple, Union
 import dolphindb as ddb
 import pandas as pd
 from streamlit_utils.utils import datetime2str
-
+from .table_setting import CREAT_EODPRICES, CREATE_FACTORDEV
 from . import config
 
 
@@ -66,6 +66,12 @@ class DolinphdbLoader(LoaderBase):
         self.session.connect(host, port, username, password)
         self.factor_data: pd.DataFrame = None
         self.stock_price: pd.DataFrame = None
+
+        if not self.session.existsDatabase(config.FACTPR_DB_PATH):
+            self.session.run(CREATE_FACTORDEV)
+
+        if not self.session.existsDatabase(config.PRICE_DB_PATH):
+            self.session.run(CREAT_EODPRICES)
 
     def get_factor_data(
         self, factor_name: Union[List, str], start_dt: str = None, end_dt: str = None
