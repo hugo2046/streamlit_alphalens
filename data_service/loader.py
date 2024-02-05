@@ -118,6 +118,9 @@ class DolinphdbLoader(LoaderBase):
         default_fields: List[str] = ["code", "trade_date"] + [
             field for field in fields if field not in ["trade_date", "code"]
         ]
+        default_fields: List[str] = [
+            {"vwap": "avg_price as vwap"}.get(i, i) for i in default_fields
+        ]
         default_fields_str: str = ",".join(default_fields)
 
         if not isinstance(codes, (str, list)):
