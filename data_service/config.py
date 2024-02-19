@@ -12,8 +12,14 @@ from typing import Dict
 DB_CONN: Dict = dict(
     host="localhost", port=8848, username="admin", password="123456"
 )  # dolphindb本地连接
+
+# table name
 FACTOR_TABLE_NAME: str = "DailyFactor"  # 因子表名
-PRICE_TABLE_NAME: str = "EodPrices"
+BOARD_TABLE:str = "DailyFactorSummary" # 因子分析表名
+BOARD_TREND:str = "DailyFactorTrend" # 因子分析趋势表名
+PRICE_TABLE_NAME: str = "EodPrices" 
+
+# path
 FACTPR_DB_PATH: str = "dfs://FactorDev"  # 测试用-因子数据
 PRICE_DB_PATH: str = "dfs://TushareData"
 

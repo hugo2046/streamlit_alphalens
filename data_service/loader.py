@@ -175,6 +175,46 @@ class DolinphdbLoader(LoaderBase):
             .tolist()
         )
 
+    def get_factor_board(self, watch_dt: str = None, count: int = None) -> pd.DataFrame:
+
+        def _query_max_time(table_name: str) -> pd.DatetimeIndex:
+
+            current_dt: pd.DatetimeIndex = self.session.run(
+                f"""select max(trade_date) as current_dt from loadTable("{config.FACTOR_PATH}","{table_name}")"""
+            )["current_dt"].iloc[0]
+
+            return datetime2str(current_dt, "%Y.%m.%d")
+
+        def _get_offsetday_from_trend_table(watch_dt: str, count: int) -> str:
+
+            all_idx: pd.Series = self.session.run(
+                f"""select distinct trade_date from loadTable("{config.FACTOR_PATH}","{config.BOARD_TREND}") where trade_date <= {watch_dt}"""
+            )["trade_date"]
+            return datetime2str(all_idx.iloc[-count], "%Y.%m.%d")
+
+        if watch_dt is None:
+            watch_dt: str = _query_max_time(config.BOARD_TABLE)
+
+        summary_table: pd.DataFrame = self.session.run(
+            f"""select * from loadTable("{config.FACTOR_PATH}","{config.BOARD_TABLE}") where trade_date = {watch_dt}"""
+        )
+
+        max_dt: str = _query_max_time(config.BOARD_TREND)
+        begin_dt: str = (
+            _get_offsetday_from_trend_table(watch_dt, count)
+            if count is not None
+            else None
+        )
+        if begin_dt is None:
+            trend_df: pd.DataFrame = self.session.run(
+                f"""select * from loadTable("{config.FACTOR_PATH}","{config.BOARD_TREND}") where trade_date <= {watch_dt}"""
+            )
+
+        else:
+            trend_df: pd.DataFrame = self.session.run(
+                f"""select * from loadTable({config.FACTOR_PATH},{config.BOARD_TREND}") where trade_date >= {begin_dt} and trade_date <= {watch_dt}"""
+            )
+
 
 class ParquetLoder(LoaderBase):
     def __init__(
