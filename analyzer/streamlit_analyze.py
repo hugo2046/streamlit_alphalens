@@ -668,7 +668,7 @@ class FactorAnalyzer(object):
         """计算指定调仓周期的按因子值加权组合每日累积收益
 
         当 period > 1 时，组合的累积收益计算方法为：
-        组合每日收益 = （从第0天开始每period天一调仓的组合每日收益 +
+        组合每日收益 = （从第0天开始每period天一调仓的组合每日收益 + 
                         从第1天开始每period天一调仓的组合每日收益 + ... +
                         从第period-1天开始每period天一调仓的组合每日收益) / period
         组合累积收益 = 组合每日收益的累积
@@ -840,16 +840,16 @@ class FactorAnalyzer(object):
             keys=list(map(convert_to_forward_returns_columns, self._periods)),
         )
     
-    @property
-    def top_down_returns(self)->pd.DataFrame:
-        return pd.concat(
-            [
-                self.calc_top_down_returns(period=period)
-                for period in self._periods
-            ],
-            axis=1,
-            keys=list(map(convert_to_forward_returns_columns, self._periods)),
-        )
+    # @property
+    # def top_down_returns(self)->pd.DataFrame:
+    #     return pd.concat(
+    #         [
+    #             self.calc_top_down_returns(period=period)
+    #             for period in self._periods
+    #         ],
+    #         axis=1,
+    #         keys=list(map(convert_to_forward_returns_columns, self._periods)),
+    #     )
 
     def plot_returns_table(
         self, demeaned=False, group_adjust=False, make_pretty: bool = True
@@ -1003,6 +1003,7 @@ class FactorAnalyzer(object):
         )
         return pl.plot_ic_hist(ic)
 
+
     def plot_ic_qq(
         self, group_adjust=False, method=None, theoretical_dist=None
     ) -> List[go.Figure]:
@@ -1129,6 +1130,10 @@ class FactorAnalyzer(object):
         ]
 
         return figs
+
+    def plot_factor_distribution(self):
+        """画因子值分布图"""
+        pl.plot_factor_histogram(self._clean_factor_data['factor'])
 
     def plot_top_bottom_quantile_turnover(self, periods=None) -> List[go.Figure]:
         """画最高最低分位换手率图
@@ -1478,6 +1483,8 @@ class FactorAnalyzer(object):
         - True: 画按行业分组信息比率(IC)图
         - False: 画月度信息比率(IC)图
         """
+
+        plotting_by_streamlit(self.plot_factor_distribution())
         plotting_by_streamlit(self.plot_ic_ts(group_adjust=group_adjust, method=None))
 
         plotting_by_streamlit(self.plot_cumulative_ic_ts(group_adjust=group_adjust))
@@ -1572,6 +1579,8 @@ class FactorAnalyzer(object):
         当找到中文字体但中文显示乱码时, 可调用此 API 关闭中文图例显示而使用英文
         """
         _use_chinese(False)
+
+
 
 
 def create_full_tear_sheet(

@@ -6,6 +6,7 @@ LastEditTime: 2024-01-04 12:38:31
 FilePath: 
 Description: 
 """
+
 from __future__ import division, print_function
 
 from typing import Dict, List, Tuple, Union
@@ -45,6 +46,7 @@ from .plot_utils import (
     QRETURNVIOLIN,
     TBTURNOVER,
     TDCUMRET,
+    FACTORHIST,
     get_rgb_color,
 )
 
@@ -166,6 +168,28 @@ def plot_ic_ts(ic: Union[pd.Series, pd.DataFrame]) -> List[go.Figure]:
     return fig
 
 
+def plot_factor_hist(factor: Union[pd.Series, pd.DataFrame]) -> List[go.Figure]:
+
+    if isinstance(factor, pd.DataFrame):
+        return [plot_factor_hist(ser) for _, ser in factor.items()]
+
+    fig = ff.create_distplot(factor, [factor.name])
+
+    fig.add_annotation(
+        x=0.05,
+        y=0.95,
+        text=FACTORHIST.get("TEXT").format(factor.skew(), factor.kurt(),factor.mean()),
+        showarrow=False,
+        xref="paper",
+        yref="paper",
+        xanchor="left",
+        yanchor="top",
+    )
+    fig.update_yaxes(showgrid=False)
+    fig.update_xaxes(showgrid=False)
+    return fig
+
+
 def plot_ic_hist(ic: Union[pd.DataFrame, pd.Series]) -> List[go.Figure]:
     if isinstance(ic, pd.DataFrame):
         return [plot_ic_hist(ser) for _, ser in ic.items()]
@@ -174,7 +198,9 @@ def plot_ic_hist(ic: Union[pd.DataFrame, pd.Series]) -> List[go.Figure]:
     period: str = ic.name
     # 计算合适的 bin 大小
     data_range: float = ic.max() - ic.min()
-    bin_count: int = int(np.sqrt(len(ic)))  # 作为示例，使用数据点数量的平方根作为 bin 数量
+    bin_count: int = int(
+        np.sqrt(len(ic))
+    )  # 作为示例，使用数据点数量的平方根作为 bin 数量
     bin_size: float = data_range / bin_count
 
     # 创建直方图和 KDE
@@ -1164,7 +1190,7 @@ def plot_cumulative_ic_ts(ic: pd.DataFrame) -> go.Figure:
     if not isinstance(ic, pd.DataFrame):
         raise ValueError("ic must be pd.DataFrame")
     cumic: pd.DataFrame = ic.cumsum()
-    sorted_columns = sorted(cumic.columns, key=lambda x: int(x.split('_')[1]))
+    sorted_columns = sorted(cumic.columns, key=lambda x: int(x.split("_")[1]))
     cumic: pd.DataFrame = cumic[sorted_columns]
     fig = go.Figure()
 

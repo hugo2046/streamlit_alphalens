@@ -158,6 +158,14 @@ class ICTS(_PlotLabels):
 
 ICTS = ICTS()
 
+class FACTORHIST(_PlotLabels):
+
+    TITLE_CN = "因子值分布直方图"
+    TITLE_EN = "Factor Value Distribution Histogram"
+    LEGEND_CN = "偏度 {:.3f} \n峰度 {:.3f} \n均值 {:.3f}"
+    LEGEND_EN = "Skewness {:.3f} \nKurtosis {:.3f} \nMean {:.3f}"
+
+FACTORHIST = FACTORHIST()
 
 class CUMICTS(_PlotLabels):
     TITLE_CN = "累计IC"
