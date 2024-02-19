@@ -24,7 +24,7 @@ def factor_selector(factor_names: List[str]):
     """设置因子及回测参数"""
 
     if not factor_names:
-        st.warning("因子列表为空，请检查数据", icon="warning")
+        st.warning("因子列表为空，请检查数据", icon="⚠️")
 
     st.header("🧬因子选择")
 
