@@ -23,7 +23,7 @@ def merge_table(dfs: Dict, axis: int = 1) -> pd.DataFrame:
             df.columns, key=lambda x: int(x.split("_")[1])
         )
         df: pd.DataFrame = df[sorted_columns]
-        df.columns: pd.DataFrame = pd.MultiIndex.from_product([[k], df.columns])
+        df.columns = pd.MultiIndex.from_product([[k], df.columns])
         new_df.append(df)
 
     all_df: pd.DataFrame = (
@@ -81,34 +81,61 @@ def highlight_by_group(df: pd.DataFrame):
 
 
 
-def calc_metric(fa: FactorAnalyzer, method: str) -> pd.DataFrame:
+# def calc_metric(fa: FactorAnalyzer, method: str) -> pd.DataFrame:
+#     method_dict: Dict = {
+#         "factor_returns": ("calc_factor_returns", "cumulative_returns"),
+#         "top_bottom": ("top_down_returns", "top_down_cumulative_returns"),
+#     }
+
+#     if method == "factor_returns":
+#         factor_returns: pd.DataFrame = getattr(fa, method_dict[method][0])()
+#     else:
+#         factor_returns: pd.DataFrame = getattr(fa, method_dict[method][0])
+
+#     metric_df: pd.DataFrame = pd.DataFrame(
+#         columns=[
+#             "Annualvolatility",
+#             "CumReturn",
+#             "AnnualReturn",
+#             "MaxDrawdown",
+#             "SharpeRatio",
+#         ]
+#     )
+#     metric_df["Annualvolatility"] = factor_returns.apply(ep.annual_volatility)
+#     metric_df["CumReturn"] = getattr(fa, method_dict[method][1]).iloc[-1]
+#     metric_df["AnnualReturn"] = factor_returns.apply(ep.annual_return)
+#     metric_df["MaxDrawdown"] = factor_returns.apply(ep.max_drawdown)
+#     metric_df["SharpeRatio"] = factor_returns.apply(ep.sharpe_ratio)
+
+#     return metric_df
+
+def calc_metric(fa, method: str) -> pd.DataFrame:
     method_dict: Dict = {
-        "factor_returns": ("calc_factor_returns", "cumulative_returns"),
-        "top_bottom": ("top_down_returns", "top_down_cumulative_returns"),
+        "factor_returns": "cumulative_returns",
+        "top_bottom": "top_down_cumulative_returns",
     }
 
     if method == "factor_returns":
-        factor_returns: pd.DataFrame = getattr(fa, method_dict[method][0])()
+        factor_returns: pd.DataFrame = getattr(fa, method_dict[method]).pct_change()
     else:
-        factor_returns: pd.DataFrame = getattr(fa, method_dict[method][0])
+        factor_returns: pd.DataFrame = getattr(fa, method_dict[method]).pct_change()
 
     metric_df: pd.DataFrame = pd.DataFrame(
         columns=[
-            "Annualvolatility",
+            "AnnualVolatility",
             "CumReturn",
             "AnnualReturn",
             "MaxDrawdown",
             "SharpeRatio",
         ]
     )
-    metric_df["Annualvolatility"] = factor_returns.apply(ep.annual_volatility)
-    metric_df["CumReturn"] = getattr(fa, method_dict[method][1]).iloc[-1]
+    metric_df["AnnualVolatility"] = factor_returns.apply(ep.annual_volatility)
+    metric_df["CumReturn"] = getattr(fa, method_dict[method]).iloc[-1]
     metric_df["AnnualReturn"] = factor_returns.apply(ep.annual_return)
     metric_df["MaxDrawdown"] = factor_returns.apply(ep.max_drawdown)
     metric_df["SharpeRatio"] = factor_returns.apply(ep.sharpe_ratio)
 
     return metric_df
-
 
 def get_factor_board(analyze_dict: Dict) -> pd.DataFrame:
     """

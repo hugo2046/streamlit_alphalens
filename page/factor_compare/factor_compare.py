@@ -6,7 +6,7 @@ LastEditTime: 2024-01-08 15:04:29
 FilePath: 
 Description: 
 """
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple,Union
 
 import numpy as np
 import pandas as pd
@@ -22,24 +22,21 @@ if "alphlens_params" not in st.session_state:
     st.session_state["alphlens_params"] = {}
 
 
-def show_board(analyze_dict: Dict) -> None:
+def show_board(analyze_dict: Dict,sel_period:Union[int,str]) -> None:
     def style_negative(v):
         return np.where(v.values > 0, "color:red;", "color:green;")
 
     # 画时序
 
     board: pd.DataFrame = get_factor_board(analyze_dict).reset_index()
-    period: List[str] = board["Period"].unique().tolist()
-    option: str = st.selectbox(
-        "选择所需查看的周期", ["All"] + period, index=0, key="SelBoradPeriod"
-    )
-    if option == "All":
+
+    if sel_period == "All":
         query_board: pd.DataFrame = board
     else:
-        query_board: pd.DataFrame = board.query(f"Period == '{option}'")
+        query_board: pd.DataFrame = board.query(f"Period == '{sel_period}'")
 
     subset: List[str] = [
-        "Annualvolatility",
+        "AnnualVolatility",
         "CumReturn",
         "AnnualReturn",
         "MaxDrawdown",
@@ -69,7 +66,7 @@ def show_board(analyze_dict: Dict) -> None:
     )
 
 
-def show_table(analyze_dict: Dict) -> None:
+def show_table(analyze_dict: Dict,sel_period:Union[str,int]) -> None:
     # 画table
     tables_names: Tuple = {
         "plot_returns_table": "因子收益表",
@@ -85,20 +82,26 @@ def show_table(analyze_dict: Dict) -> None:
         all_factor_frame: pd.DataFrame = merge_table(dfs)
         all_factor_frame: pd.DataFrame = all_factor_frame.stack(level=0)
         all_factor_frame.index.names = ["Metric", "Period"]
+
+        if sel_period == "All":
+            query_board: pd.DataFrame = all_factor_frame
+        else:
+            query_board: pd.DataFrame = all_factor_frame.query(f"Period == '{sel_period}'")
+
         st.markdown(f"**{table_name}**")
 
-        if all_factor_frame.shape[1] > 0:
+        if query_board.shape[1] > 0:
             # st.markdown(
             #     highlight_by_group(all_factor_frame).to_html(), unsafe_allow_html=True
             # )
 
             st.dataframe(
-                all_factor_frame.style.background_gradient(
+                query_board.style.background_gradient(
                     cmap="RdYlGn_r", axis=1
                 ).format(precision=3)
             )
         else:
-            st.dataframe(all_factor_frame.style.format(precision=3))
+            st.dataframe(query_board.style.format(precision=3))
 
 
 def mult_factor_report(loader: Loader) -> FactorAnalyzer:
@@ -119,8 +122,15 @@ def mult_factor_report(loader: Loader) -> FactorAnalyzer:
     status_placeholder.empty()
     st.toast("分析完毕!", icon="🎉")
     
-    show_board(analyze_dict)
-    show_table(analyze_dict)
+    board: pd.DataFrame = get_factor_board(analyze_dict).reset_index()
+    period: List[str] = board["Period"].unique().tolist()
+
+    sel_period: str = st.selectbox(
+        "选择所需查看的周期", ["All"] + period, index=1, key="SelBoradPeriod"
+    )
+
+    show_board(analyze_dict,sel_period)
+    show_table(analyze_dict,sel_period)
     
 
 

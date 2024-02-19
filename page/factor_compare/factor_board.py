@@ -292,7 +292,7 @@ def show_factor_board_table(table: pd.DataFrame) -> None:
     AgGrid(
         table,
         gridOptions=gridOptions,
-        width="100%",
+        #width="100%",
         fit_columns_on_grid_load=True,
         allow_unsafe_jscode=True,
         # enable_enterprise_modules=True,
