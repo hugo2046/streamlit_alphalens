@@ -1133,7 +1133,8 @@ class FactorAnalyzer(object):
 
     def plot_factor_distribution(self):
         """画因子值分布图"""
-        pl.plot_factor_histogram(self._clean_factor_data['factor'])
+       
+        return pl.plot_factor_hist(self._clean_factor_data['factor'])
 
     def plot_top_bottom_quantile_turnover(self, periods=None) -> List[go.Figure]:
         """画最高最低分位换手率图
@@ -1376,6 +1377,10 @@ class FactorAnalyzer(object):
                 by_group=False, demeaned=demeaned, group_adjust=group_adjust
             ),
         )
+        
+        st.markdown("**因子值分布图**")
+
+        plotting_by_streamlit(self.plot_factor_distribution())
 
         with st.container():
             col3, col4 = st.columns(2)
@@ -1484,7 +1489,6 @@ class FactorAnalyzer(object):
         - False: 画月度信息比率(IC)图
         """
 
-        plotting_by_streamlit(self.plot_factor_distribution())
         plotting_by_streamlit(self.plot_ic_ts(group_adjust=group_adjust, method=None))
 
         plotting_by_streamlit(self.plot_cumulative_ic_ts(group_adjust=group_adjust))

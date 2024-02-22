@@ -15,6 +15,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
 import seaborn as sns
@@ -173,12 +174,29 @@ def plot_factor_hist(factor: Union[pd.Series, pd.DataFrame]) -> List[go.Figure]:
     if isinstance(factor, pd.DataFrame):
         return [plot_factor_hist(ser) for _, ser in factor.items()]
 
-    fig = ff.create_distplot(factor, [factor.name])
+    # fig = ff.create_distplot([factor.values], [factor.name], show_hist=True,show_curve=show_curve, show_rug=show_rug)
+
+    # fig.add_annotation(
+    #     x=0.05,
+    #     y=0.95,
+    #     text=FACTORHIST.get("TEXT").format(factor.skew(), factor.kurt(),factor.mean()),
+    #     showarrow=False,
+    #     xref="paper",
+    #     yref="paper",
+    #     xanchor="left",
+    #     yanchor="top",
+    # )
+    # fig.update_yaxes(showgrid=False)
+    # fig.update_xaxes(showgrid=False)
+    # return fig
+    fig = px.histogram(
+    factor.to_frame('factor'), x="factor", color_discrete_sequence=["#838df9"]
+    )
 
     fig.add_annotation(
         x=0.05,
         y=0.95,
-        text=FACTORHIST.get("TEXT").format(factor.skew(), factor.kurt(),factor.mean()),
+        text=FACTORHIST.get("TEXT").format(factor.skew(), factor.kurt(), factor.mean()),
         showarrow=False,
         xref="paper",
         yref="paper",
