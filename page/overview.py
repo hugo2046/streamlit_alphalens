@@ -1,3 +1,4 @@
+
 """
 Author: hugo2046 shen.lan123@gmail.com
 Date: 2023-09-15 14:08:43
@@ -15,8 +16,8 @@ import streamlit as st
 from .utils import local_json_lottie
 
 
-def redirect(index=0):
-    st.session_state["index"] = index
+# def redirect(index=0):
+#     st.session_state["index"] = index
 
 
 def overview():
@@ -65,9 +66,7 @@ def update_csv():
 def account_settings():
     with st.container(border=True):
         st.header("参数设置")
-
         st.subheader("数据加载设置")
-
         loader_type: bool = st.toggle(
             "使用DolphinDB数据库", value=st.session_state["db_or_csv"]
         )

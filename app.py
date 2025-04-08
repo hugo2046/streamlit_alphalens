@@ -37,7 +37,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-
+# 初始设置
 if "index" not in st.session_state:
     st.session_state["index"] = 0
 
@@ -50,8 +50,9 @@ if "loader_type" not in st.session_state:
 if "price" not in st.session_state:
     st.session_state["price_type"] = "vwap"
 
+# 设置默认使用本地数据
 if "db_or_csv" not in st.session_state:
-    st.session_state["db_or_csv"] = True
+    st.session_state["db_or_csv"] = False
 
 with st.sidebar.container():
     st.subheader("Workflow")
